@@ -2,12 +2,11 @@ package main
 
 import (
 	"goapi/dbconnect"
+	"goapi/routes"
 	"log"
 	"net/http"
 
 	"html/template"
-
-	"github.com/gorilla/mux"
 )
 
 var tmpl *template.Template
@@ -34,9 +33,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	dbconnect.Connect()
+	db, err := dbconnect.Connect()
+	if err != nil {
+		log.Fatalf("could not connect to database: %v", err)
+	}
 
-	r := mux.NewRouter()
+	r := routes.InitRoutes(db)
+
 	r.HandleFunc("/", handler)
 
 	log.Println("running on port 3000")

@@ -1,4 +1,4 @@
-package controllers
+package handlers
 
 import (
 	"encoding/json"
@@ -12,9 +12,10 @@ import (
 	"gorm.io/gorm"
 )
 
+
 func GetUser(w http.ResponseWriter, r *http.Request) {
 	db := dbconnect.DB
-	id := mux.Vars(r)["id"]
+    id := mux.Vars(r)["id"]
 
 	// en el caso de que no sea proporcionado un id entra en el if, sino es que se proporciono un id
 	if id == "" {
@@ -24,6 +25,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
 
 func GetUserById(db *gorm.DB, id string, w http.ResponseWriter) {
 	var user models.User
@@ -58,9 +60,7 @@ func GetAllUsers(db *gorm.DB, w http.ResponseWriter) {
 	json.NewEncoder(w).Encode(users)
 }
 
-func CreateUser(w http.ResponseWriter, r *http.Request) {
-	db := dbconnect.DB
-
+func CreateUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	// cuando usamos new para decodificar la entrada json estamos usando el modelo completo incluyendo la pass, con lo cual tenemos que cifrarla
 	user := new(models.User)
 

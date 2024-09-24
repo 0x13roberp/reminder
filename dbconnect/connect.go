@@ -11,7 +11,7 @@ import (
 
 var DB *gorm.DB
 
-func Connect() {
+func Connect() (*gorm.DB, error) {
 	config := config.GetConfig()
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		config.DB_USER,
@@ -20,8 +20,8 @@ func Connect() {
 		config.DB_PORT,
 		config.DB_NAME)
 
-    var err error
-	DB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	var err error
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	if err != nil {
 		panic(fmt.Sprintf("failed to connect to database: %s", err.Error()))
@@ -31,8 +31,10 @@ func Connect() {
 	fmt.Println("migrating schema")
 
 	DB.AutoMigrate(models.User{})
-    DB.AutoMigrate(models.Payment{})
-    DB.AutoMigrate(models.Category{})
+	DB.AutoMigrate(models.Payment{})
+	DB.AutoMigrate(models.Category{})
 
 	fmt.Println("schema migrated")
+
+	return DB, nil
 }
