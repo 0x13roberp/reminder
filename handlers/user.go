@@ -103,3 +103,27 @@ func hashPw(password string) (string, error) {
 	pass, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	return string(pass), err
 }
+
+func UpdateUser(db *gorm.DB, w http.ResponseWriter, r *http.Request)  {
+    // tenemos que crear una estructura custom para usarla como intermediario
+    type updateUser struct{
+        Name string `gorm:"not null" json:"name"`
+        Email string `gorm:"not null" json:"email"`
+        Username string `json:"username"`
+        Password string `gorm:"not null" json:"password,omitempty"`
+    }
+
+    // instacia que va a usar el usuario para actulizar 
+    var inputUser updateUser
+
+    // chequear que no hayan errores al procesarlo
+    if err := json.NewDecoder(r.Body).Decode(&inputUser); err != nil {
+        http.Error(w, "invalid request", http.StatusBadRequest)
+        return
+    }
+
+    if inputUser.Name == "" || inputUser.Email == "" || inputUser.Password == "" {
+        http.Error(w, "all fields are required", http.StatusBadRequest)
+        return
+    }
+}
