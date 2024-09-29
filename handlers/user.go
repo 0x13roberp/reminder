@@ -12,10 +12,9 @@ import (
 	"gorm.io/gorm"
 )
 
-
 func GetUser(w http.ResponseWriter, r *http.Request) {
 	db := dbconnect.DB
-    id := mux.Vars(r)["id"]
+	id := mux.Vars(r)["id"]
 
 	// en el caso de que no sea proporcionado un id entra en el if, sino es que se proporciono un id
 	if id == "" {
@@ -25,7 +24,6 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
-
 
 func GetUserById(db *gorm.DB, id string, w http.ResponseWriter) {
 	var user models.User
@@ -70,7 +68,7 @@ func CreateUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// comprobar que no pase campos vacios
-	if user.Name == "" || user.Email == "" || user.Username == "" || user.Password == "" {
+	if user.Name == "" || user.Email == "" || user.Password == "" {
 		http.Error(w, "all fields are required", http.StatusBadRequest)
 		return
 	}
@@ -104,26 +102,84 @@ func hashPw(password string) (string, error) {
 	return string(pass), err
 }
 
-func UpdateUser(db *gorm.DB, w http.ResponseWriter, r *http.Request)  {
-    // tenemos que crear una estructura custom para usarla como intermediario
-    type updateUser struct{
-        Name string `gorm:"not null" json:"name"`
-        Email string `gorm:"not null" json:"email"`
-        Username string `json:"username"`
-        Password string `gorm:"not null" json:"password,omitempty"`
-    }
+func UpdateUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	var user models.User
 
-    // instacia que va a usar el usuario para actulizar 
-    var inputUser updateUser
+	result := db.First(&user, id)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			http.Error(w, "user not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "error while connecting", http.StatusInternalServerError)
+		}
+		return
+	}
 
-    // chequear que no hayan errores al procesarlo
-    if err := json.NewDecoder(r.Body).Decode(&inputUser); err != nil {
-        http.Error(w, "invalid request", http.StatusBadRequest)
-        return
-    }
+	// tenemos que crear una estructura custom para usarla como intermediario
+	type updateUser struct {
+		Name     string `gorm:"not null" json:"name"`
+		Email    string `gorm:"not null" json:"email"`
+		Username string `json:"username"`
+		Password string `gorm:"not null" json:"password,omitempty"`
+	}
 
-    if inputUser.Name == "" || inputUser.Email == "" || inputUser.Password == "" {
-        http.Error(w, "all fields are required", http.StatusBadRequest)
-        return
-    }
+	// instacia que va a usar el usuario para actulizar
+	var inputUser updateUser
+
+	// chequear que no hayan errores al procesarlo
+	if err := json.NewDecoder(r.Body).Decode(&inputUser); err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+
+	if inputUser.Name == "" || inputUser.Email == "" || inputUser.Password == "" {
+		http.Error(w, "all fields are required", http.StatusBadRequest)
+		return
+	}
+
+	password, err := hashPw(inputUser.Password)
+	if err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	user.Name = inputUser.Name
+	user.Email = inputUser.Email
+	user.Username = inputUser.Username
+	user.Password = password
+
+	if err := db.Save(&user).Error; err != nil {
+		http.Error(w, "error updating the user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
+}
+
+func DeleteUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	var user models.User
+
+	result := db.First(&user, id)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			http.Error(w, "user not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "error while connecting", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	result = db.Delete(&user)
+	if result.Error != nil {
+		http.Error(w, "error while deleting", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
 }

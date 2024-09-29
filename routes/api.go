@@ -12,7 +12,7 @@ func InitRoutes(db *gorm.DB) *mux.Router {
 	r := mux.NewRouter()
 	userRouter := r.PathPrefix("/users").Subrouter()
 
-    // GET routes
+	// GET routes
 	userRouter.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetUser(w, r)
 	}).Methods(http.MethodGet)
@@ -21,13 +21,21 @@ func InitRoutes(db *gorm.DB) *mux.Router {
 		handlers.GetUser(w, r)
 	}).Methods(http.MethodGet)
 
-    // POST routes 
+	// POST routes
 
 	userRouter.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
 		handlers.CreateUser(db, w, r)
 	}).Methods(http.MethodPost)
 
-    // PUT routes
+	// PUT routes
+	userRouter.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		handlers.UpdateUser(db, w, r)
+	}).Methods(http.MethodPut)
+
+    // DELETE routes
+    userRouter.HandleFunc("/{id}", func (w http.ResponseWriter, r *http.Request)  {
+        handlers.DeleteUser(db, w, r)
+    }).Methods(http.MethodDelete)
 
 	return r
 }
