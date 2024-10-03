@@ -6,4 +6,5 @@ type Category struct {
 	Notify    bool   `json:"notify"`
 	Recurrent bool   `json:"recurrent"`
 	Name      string `gorm:"not null" json:"name"`
+	UserID    uint   `json:"user_id"`
 }

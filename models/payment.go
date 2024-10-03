@@ -3,6 +3,7 @@ package models
 type Payment struct {
 	ID          uint    `gorm:"primaryKey" json:"id"`
 	CategoryID  uint    `json:"category_id"`
+	UserID      uint    `json:"user_id"`
 	NetAmount   float64 `gorm:"not null" json:"net_amount"`
 	GrossAmount float64 `gorm:"not null" json:"gross_amount"`
 	Deductible  float64 `json:"deductible"`
